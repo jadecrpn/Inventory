@@ -3,22 +3,27 @@ ob_start();
 session_start();
 include('inc/header.php');
 
-
 $loginError = '';
 if (!empty($_POST['email']) && !empty($_POST['pwd'])) {
     include 'Inventory.php';
     $inventory = new Inventory();
     $login = $inventory->login($_POST['email'], $_POST['pwd']);
+    
     if (!empty($login)) {
+        // Correct email and password
         $_SESSION['userid'] = $login[0]['userid'];
         $_SESSION['name'] = $login[0]['name'];
         header("Location: index.php");
         exit();
     } else {
+        // Incorrect email or password
         $loginError = "Invalid email or password!";
+        // Debugging: Log the email and password to see if they are correct
+        error_log("Login attempt failed for email: " . $_POST['email'] . ", password: " . $_POST['pwd']);
     }
 }
 ?>
+
 
 <style>
 html,
@@ -98,6 +103,3 @@ body {
     </div>
 </div>
 
-<div class="footer">
-    <?php include('inc/footer.php'); ?>
-</div>

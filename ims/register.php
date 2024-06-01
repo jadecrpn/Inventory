@@ -1,24 +1,29 @@
+
+
 <?php
-ob_start();
 session_start();
 include('inc/header.php');
 
-
 $loginError = '';
-if (!empty($_POST['email']) && !empty($_POST['pwd'])) {
+if (!empty($_POST['email']) && !empty($_POST['pwd']) && !empty($_POST['name'])) {
     include 'Inventory.php';
-    $inventory = new Inventory();
-    $login = $inventory->login($_POST['email'], $_POST['pwd']);
-    if (!empty($login)) {
+    
+    $inventory = new Inventory(); 
+    $register = $inventory->register($_POST['email'], $_POST['pwd'], $_POST['name']);
+
+    if ($register === true) {
+        // Registration successful, set session variables and redirect
         $_SESSION['userid'] = $login[0]['userid'];
-        $_SESSION['name'] = $login[0]['name'];
+        $_SESSION['name'] = $_POST['name'];
         header("Location: index.php");
         exit();
     } else {
-        $loginError = "Invalid email or password!";
+        $loginError = $register; 
     }
 }
 ?>
+
+
 
 <style>
 html,
@@ -83,6 +88,10 @@ body {
                             <?php } ?>
                         </div>
                         <div class="mb-3">
+                            <label for="name" class="control-label">Name</label>
+                            <input name="name" id="name" type="name" class="form-control rounded-0" placeholder="Username" required>
+                        </div>
+                        <div class="mb-3">
                             <label for="email" class="control-label">Email</label>
                             <input name="email" id="email" type="email" class="form-control rounded-0" placeholder="Email address" autofocus="" value="<?= isset($_POST['email']) ? htmlspecialchars($_POST['email']) : '' ?>" required>
                         </div>
@@ -90,10 +99,7 @@ body {
                             <label for="password" class="control-label">Password</label>
                             <input type="password" class="form-control rounded-0" id="password" name="pwd" placeholder="Password" required>
                         </div>
-                        <div class="mb-3">
-                            <label for="confirm-password" class="control-label"> Confirm Password</label>
-                            <input type="confirm-password" class="form-control rounded-0" id="confirm-password" name="confirm-password" placeholder=" Confim Password" required>
-                        </div>
+                       
 
                         <div class="d-grid">
                             <button type="submit" name="login" class="btn btn-primary rounded-0">Register</button>
@@ -106,6 +112,4 @@ body {
     </div>
 </div>
 
-<div class="footer">
-    <?php include('inc/footer.php'); ?>
-</div>
+

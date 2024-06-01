@@ -4,6 +4,7 @@ $(document).ready(function() {
         $('#customerForm')[0].reset();
         $('.modal-title').html("<i class='fa fa-plus'></i> Add Customer");
     });
+
     var userdataTable = $('#customerList').DataTable({
         "lengthChange": false,
         "processing": true,
@@ -16,20 +17,18 @@ $(document).ready(function() {
             dataType: "json"
         },
         "columnDefs": [{
-            "target": [0, 5],
+            "targets": [1], // Index of the Action column
             "orderable": false
         }],
         "pageLength": 25,
         'rowCallback': function(row, data, index) {
-            $(row).find('td').addClass('align-middle')
-            $(row).find('td:eq(0), td:eq(5)').addClass('text-center')
-            $(row).find('td:eq(4)').addClass('text-end')
+            $(row).find('td').addClass('align-middle');
+            $(row).find('td:eq(0), td:eq(1)').addClass('text-center');
         },
     });
 
     $(document).on('submit', '#customerForm', function(event) {
         event.preventDefault();
-        console.log('test')
         $('#action').attr('disabled', 'disabled');
         var formData = $(this).serialize();
         $.ajax({
@@ -56,10 +55,8 @@ $(document).ready(function() {
             dataType: "json",
             success: function(data) {
                 $('#customerModal').modal('show');
-                $('#cname').val(data.name);
-                $('#mobile').val(data.mobile);
-                $('#balance').val(data.balance);
-                $('#address').val(data.address);
+                $('#date').val(data.date);
+                $('#item_purchased').val(data.item_purchased);
                 $('.modal-title').html("<i class='fa fa-edit'></i> Edit Customer");
                 $('#userid').val(userid);
                 $('#btn_action').val('customerUpdate');
@@ -84,5 +81,5 @@ $(document).ready(function() {
             return false;
         }
     });
-
 });
+

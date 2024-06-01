@@ -77,7 +77,7 @@ $inventory->checkLogin();
                                     <label>Supplier</label>
                                     <select name="supplierid" id="supplierid" class="form-select rounded-0" required>
                                         <option value="">Select Supplier</option>
-                                       
+                                        <?php echo $inventory->supplierDropdownList();?>
                                     </select>
                                 </div>
                             </form>

@@ -46,6 +46,7 @@ class Inventory {
 		$numRows = mysqli_num_rows($result);
 		return $numRows;
 	}
+
 	public function login($email, $password){
 		$password = md5($password);
 		$sqlQuery = "
@@ -60,30 +61,30 @@ class Inventory {
 		}
 	}
 	
-	public function register($email, $password, $name) {
-			// Check if email already exists
-			$stmt = $this->conn->prepare("SELECT * FROM users WHERE email = ?");
-			$stmt->bind_param("s", $email);
-			$stmt->execute();
-			$result = $stmt->get_result();
-			$stmt->close();
 	
-			if ($result->num_rows > 0) {
-				return "Email already exists";
+	public function register($email, $password, $name) {
+		// Check if email already exists
+		$password = md5($password);
+		$sqlQuery = "SELECT userid FROM ".$this->userTable." WHERE email='".$email."'";
+		$result = mysqli_query($this->dbConnect, $sqlQuery);
+	
+		if (mysqli_num_rows($result) > 0) {
+			// Email already exists, return an error message
+			return "Email already exists";
+		} else {
+			// Email doesn't exist, insert the new user's information
+			$sqlInsert = "INSERT INTO ".$this->userTable." (email, password, name) VALUES ('$email', '$password', '$name')";
+			$insertResult = mysqli_query($this->dbConnect, $sqlInsert);
+	
+			if ($insertResult) {
+				// Registration successful
+				return true;
 			} else {
-				// Insert new user into the database
-				$hash = password_hash($password, PASSWORD_DEFAULT);
-				$stmt = $this->conn->prepare("INSERT INTO users (name, email, password) VALUES (?, ?, ?)");
-				$stmt->bind_param("sss", $name, $email, $hash);
-				
-				if ($stmt->execute()) {
-					return true;
-				} else {
-					return "Registration failed. Please try again.";
-				}
+				// Error in registration process
+				return "Registration failed";
 			}
 		}
-	
+	}
 	public function getCustomer(){
 		$sqlQuery = "
 			SELECT * FROM ".$this->customerTable." 
@@ -93,14 +94,12 @@ class Inventory {
 		echo json_encode($row);
 	}
 	
-	public function getCustomerList(){		
+	public function getCustomerList() {
 		$sqlQuery = "SELECT * FROM ".$this->customerTable." ";
 		if(!empty($_POST["search"]["value"])){
-			$sqlQuery .= '(id LIKE "%'.$_POST["search"]["value"].'%" ';
-			$sqlQuery .= '(name LIKE "%'.$_POST["search"]["value"].'%" ';
-			$sqlQuery .= 'OR address LIKE "%'.$_POST["search"]["value"].'%" ';
-			$sqlQuery .= 'OR mobile LIKE "%'.$_POST["search"]["value"].'%") ';
-			$sqlQuery .= 'OR balance LIKE "%'.$_POST["search"]["value"].'%") ';
+			$sqlQuery .= 'WHERE (id LIKE "%'.$_POST["search"]["value"].'%" ';
+			$sqlQuery .= 'OR date LIKE "%'.$_POST["search"]["value"].'%" ';
+			$sqlQuery .= 'OR item_purchased LIKE "%'.$_POST["search"]["value"].'%") ';
 		}
 		if(!empty($_POST["order"])){
 			$sqlQuery .= 'ORDER BY '.$_POST['order']['0']['column'].' '.$_POST['order']['0']['dir'].' ';
@@ -109,53 +108,62 @@ class Inventory {
 		}
 		if($_POST["length"] != -1){
 			$sqlQuery .= 'LIMIT ' . $_POST['start'] . ', ' . $_POST['length'];
-		}	
+		}
+		
 		$result = mysqli_query($this->dbConnect, $sqlQuery);
 		$numRows = mysqli_num_rows($result);
-		$customerData = array();	
-		while( $customer = mysqli_fetch_assoc($result) ) {		
+		
+		$customerData = array();    
+		while($customer = mysqli_fetch_assoc($result)) {        
 			$customerRows = array();
 			$customerRows[] = $customer['id'];
-			$customerRows[] = $customer['name'];
-			$customerRows[] = $customer['address'];			
-			$customerRows[] = $customer['mobile'];	
-			$customerRows[] = number_format($customer['balance'],2);	
-			$customerRows[] = '<button type="button" name="update" id="'.$customer["id"].'" class="btn btn-primary btn-sm rounded-0 update" title="update"><i class="fa fa-edit"></i></button><button type="button" name="delete" id="'.$customer["id"].'" class="btn btn-danger btn-sm rounded-0 delete" ><i class="fa fa-trash"></button>';
-			$customerRows[] = '';
+			$customerRows[] = $customer['date'];
+			$customerRows[] = $customer['item_purchased'];    
+			$customerRows[] = '<button type="button" name="update" id="'.$customer["id"].'" class="btn btn-primary btn-sm rounded-0 update" title="update"><i class="fa fa-edit"></i></button>';
+			$customerRows[] = '<button type="button" name="delete" id="'.$customer["id"].'" class="btn btn-danger btn-sm rounded-0 delete"><i class="fa fa-trash"></i></button>';
+			
 			$customerData[] = $customerRows;
 		}
+		
 		$output = array(
-			"draw"				=>	intval($_POST["draw"]),
-			"recordsTotal"  	=>  $numRows,
-			"recordsFiltered" 	=> 	$numRows,
-			"data"    			=> 	$customerData
+			"draw"                => intval($_POST["draw"]),
+			"recordsTotal"        => $numRows,
+			"recordsFiltered"     => $numRows,
+			"data"                => $customerData
 		);
+		
 		echo json_encode($output);
 	}
+	
 
 	public function saveCustomer() {		
 		$sqlInsert = "
-			INSERT INTO ".$this->customerTable."(name, address, mobile, balance) 
-			VALUES ('".$_POST['cname']."', '".$_POST['address']."', '".$_POST['mobile']."', '".$_POST['balance']."')";		
+			INSERT INTO ".$this->customerTable."(date, item_purchased) 
+			VALUES ('".$_POST['date']."', '".$_POST['item_purchased']."')";		
 		mysqli_query($this->dbConnect, $sqlInsert);
 		echo 'New Customer Added';
-	}			
+	}
+
+	
 	public function updateCustomer() {
 		if($_POST['userid']) {	
-			$sqlInsert = "
+			$sqlUpdate = "
 				UPDATE ".$this->customerTable." 
-				SET name = '".$_POST['cname']."', address= '".$_POST['address']."', mobile = '".$_POST['mobile']."', balance = '".$_POST['balance']."' 
+				SET date = '".$_POST['date']."', item_purchased = '".$_POST['item_purchased']."' 
 				WHERE id = '".$_POST['userid']."'";		
-			mysqli_query($this->dbConnect, $sqlInsert);	
+			mysqli_query($this->dbConnect, $sqlUpdate);	
 			echo 'Customer Edited';
 		}	
-	}	
-	public function deleteCustomer(){
-		$sqlQuery = "
+	}
+		
+	public function deleteCustomer() {
+		$sqlDelete = "
 			DELETE FROM ".$this->customerTable." 
 			WHERE id = '".$_POST['userid']."'";		
-		mysqli_query($this->dbConnect, $sqlQuery);		
+		mysqli_query($this->dbConnect, $sqlDelete);		
+		echo 'Customer Deleted';
 	}
+	
 	// Category functions
 	public function getCategoryList(){		
 		$sqlQuery = "SELECT * FROM ".$this->categoryTable." ";

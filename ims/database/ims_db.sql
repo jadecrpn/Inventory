@@ -70,21 +70,17 @@ INSERT INTO `ims_category` (`categoryid`, `name`, `status`) VALUES
 -- Table structure for table `ims_customer`
 --
 
+-- Modify table structure
 CREATE TABLE `ims_customer` (
   `id` int(11) NOT NULL,
-  `name` varchar(200) NOT NULL,
-  `address` text NOT NULL,
-  `mobile` int(50) NOT NULL,
-  `balance` double(10,2) NOT NULL
+  `date` date NOT NULL,
+  `item_purchased` varchar(200) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
---
--- Dumping data for table `ims_customer`
---
-
-INSERT INTO `ims_customer` (`id`, `name`, `address`, `mobile`, `balance`) VALUES
-(1, 'Mark Cooper', 'Sample Address', 2147483647, 25000.00),
-(2, 'George Wilson', '2306 St, Here There', 2147483647, 35000.00);
+-- Modify data insertion script
+INSERT INTO `ims_customer` (`id`, `date`, `item_purchased`) VALUES
+(1, '2024-05-01', 'Sample Item 1'),
+(2, '2024-05-02', 'Sample Item 2');
 
 -- --------------------------------------------------------
 
